@@ -111,6 +111,19 @@ func (c commander) openInBrowser(pr pullRequest) tea.Cmd {
 	}
 }
 
+type pullRequestClosed struct {
+	pr pullRequest
+}
+
+func closePRCmd(pr pullRequest) tea.Cmd {
+	return func() tea.Msg {
+		if _, err := gh.Run("pr", "close", pr.url); err != nil {
+			return errorMessage{err: err}
+		}
+		return pullRequestClosed{pr: pr}
+	}
+}
+
 type hidePullRequestDetails struct{}
 
 func hidePullRequestDetailsCmd() tea.Cmd {

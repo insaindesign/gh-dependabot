@@ -19,6 +19,7 @@ type keyMap struct {
 	mergeDefault    key.Binding
 	mergeSquash     key.Binding
 	mergeDependabot key.Binding
+	close           key.Binding
 	rebase          key.Binding
 	recreate        key.Binding
 	view            key.Binding
@@ -28,6 +29,10 @@ type keyMap struct {
 
 func newKeyMap() *keyMap {
 	return &keyMap{
+		close: key.NewBinding(
+			key.WithKeys("C"),
+			key.WithHelp("C", "close pr"),
+		),
 		mergeRebase: key.NewBinding(
 			key.WithKeys("enter"),
 			key.WithHelp("enter", "merge (rebase)"),
@@ -225,6 +230,11 @@ func (m ListView) Update(msg tea.Msg) (ListView, tea.Cmd) {
 		case key.Matches(msg, m.keyMap.browse):
 			if selectedItem, ok := m.listModel.SelectedItem().(pullRequest); ok {
 				cmds = append(cmds, m.commander.openInBrowser(selectedItem))
+			}
+		case key.Matches(msg, m.keyMap.close):
+			if selectedItem, ok := m.listModel.SelectedItem().(pullRequest); ok {
+				m.listModel.RemoveItem(m.listModel.Index())
+				cmds = append(cmds, closePRCmd(selectedItem))
 			}
 		case key.Matches(msg, m.keyMap.view):
 			if selectedItem, ok := m.listModel.SelectedItem().(pullRequest); ok {

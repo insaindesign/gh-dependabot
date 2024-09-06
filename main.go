@@ -19,6 +19,7 @@ func main() {
 	var org string
 	var team string
 	var securityFilter bool
+	var dupes bool
 	cmd := cobra.Command{
 		Use:     "gh dependabot",
 		Short:   "Manage Dependabot PRs.",
@@ -61,15 +62,24 @@ func main() {
 					return err
 				}
 			}
-			sort.Slice(pullRequests, func(i, j int) bool {
-				return pullRequests[i].updatedAt.Before(pullRequests[j].updatedAt)
-			})
+			if dupes {
+				log.Printf("Only showing duplicate prs")
+				pullRequests, err = filterDuplicatePullRequests(&pullRequests)
+				if err != nil {
+					return err
+				}
+			} else {
+				sort.Slice(pullRequests, func(i, j int) bool {
+					return pullRequests[i].updatedAt.Before(pullRequests[j].updatedAt)
+				})
+			}
 			_, err = tea.NewProgram(newApp(client, query, pullRequests), tea.WithAltScreen()).Run()
 			return err
 		},
 	}
 	cmd.Flags().StringVarP(&org, "org", "o", "", "organization to query (e.g. einride)")
 	cmd.Flags().StringVarP(&team, "team", "t", "", "team to query (e.g. einride/team-transport-execution)")
+	cmd.Flags().BoolVarP(&dupes, "dupes", "d", false, "only show dupes")
 	cmd.Flags().
 		BoolVarP(&securityFilter, "only-security", "s", false, "show only pull requests that relate to security alerts")
 	if err := cmd.Execute(); err != nil {
